@@ -1,0 +1,250 @@
+<body>
+  <style>
+    * {
+      font-family: trebuchet ms, arial;
+    }
+    
+    .flex-item {
+      margin: 5px;
+      flex: 1;
+    }
+  </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.7.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.7.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+<script type="text/babel">
+// STYLES
+const inputBoxStyle = {
+  fontSize: 24,
+  textAlign: "center",
+};
+
+const gameScreenStyle = {
+  background: "yellow",
+  display: "flex",
+  margin: "15px auto",
+  maxWidth: 500,
+  height: 250,
+};
+
+const resultsBox = {
+  background: "orange",
+  flex: 1,
+};
+
+const buttonBox = {
+  background: "#ffdd00",
+  flex: 1,
+};
+
+const button = {
+  margin: 5,
+  width: "45%",
+  height: "45%",
+  flex: 1,
+  fontSize: 20,
+}
+
+
+
+// COMPONENTS
+const Title = () => <h1 style={{margin: 5}}>Let's play NumberWang!</h1>;
+
+
+
+class TitleScreen extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div>
+        <Title />
+        <div style={{display: "flex", margin: "auto", width: "50%", maxWidth: 600}}>
+          <input style={inputBoxStyle} className="flex-item" onChange={this.props.handleChange} value={this.props.input} type="number" />
+          <button className="flex-item" onClick={this.props.setAnswer} type="button">Play this number</button>
+        </div>
+      </div>
+    );
+  }
+};
+
+
+
+class GameScreen extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div style={gameScreenStyle}>
+        <div style={resultsBox} className="flex-item">
+          <p style={{fontSize: 24, marginBottom: -34}}>Current Guess:</p>
+          <p style={{fontSize: 72}}>{this.props.guess}</p>
+        </div>
+        <div style={buttonBox} className="flex-item">
+          <p style={{fontSize: 24}}>Your number: {this.props.answer}</p>
+          <button onClick={this.props.isLower} style={button}>Lower</button>
+          <button onClick={this.props.isHigher} style={button}>Higher</button>
+        </div>
+      </div>
+    );
+  }
+};
+
+
+
+class WinScreen extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div style={{margin: "auto", width: 500, textAlign: "right", fontSize: 24}}>
+        <p># of Guesses: {this.props.counter}</p>
+        <p>Wins: {this.props.wins}</p>
+      </div>
+    );
+  }
+};
+
+
+
+// MAIN COMPONENT
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      input: "",
+      answer: 0,
+      guess: 0,
+      highest: 0,
+      lowest: 0,
+      counter: 0,
+      wins: 0,
+      background: "lightblue"
+    }
+    this.handleChange = this.handleChange.bind(this);
+    this.setAnswer = this.setAnswer.bind(this);
+    this.setFirstGuess = this.setFirstGuess.bind(this);
+    this.isLower = this.isLower.bind(this);
+    this.isHigher = this.isHigher.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({
+      input: event.target.value
+    });
+  }
+
+  setAnswer() {
+    if (this.state.input == "") {
+      return;
+    } else {
+      this.setState({
+        guess: 0,
+        highest: 0,
+        lowest: 0,
+        counter: 0,
+        answer: parseInt(this.state.input),
+        input: "",
+        background: "lightblue"
+      });
+    }
+    this.setFirstGuess();
+  }
+
+  setFirstGuess() {
+    this.setState({
+      guess: Math.ceil(Math.random() * 1000),
+      counter: this.state.counter + 1
+    }, () => {
+      this.setState({
+        highest: this.state.guess,
+      });
+    });
+  }
+
+  checkForLies(operator) {
+    const IS_IT_TRUE = operator == "isLower" ?
+          this.state.answer > this.state.guess ? false : true :
+          this.state.answer < this.state.guess ? false : true;
+
+    if (IS_IT_TRUE == false) {
+      this.setState({
+        background: "red",
+        wins: this.state.wins - 1,
+        counter: 0,
+        guess: 0,
+        answer: 0,
+        highest: 0,
+        lowest: 0,
+      });
+      return false;
+    }
+  }
+
+  isLower() {
+    if (this.checkForLies("isLower") == false) {return};
+    this.setState({
+      highest: this.state.guess,
+      counter: this.state.counter + 1
+    }, () => {
+      this.setState({
+        guess: parseInt(this.state.lowest + (this.state.highest - this.state.lowest)/2),
+      });
+    });
+  }
+
+  isHigher() {
+    if (this.checkForLies("isHigher") == false) {return};
+    this.setState({
+      lowest: this.state.guess,
+      counter: this.state.counter + 1
+    }, () => {
+      this.setState({
+        guess: this.state.guess >= this.state.highest ?
+        parseInt(this.state.guess * 1.5) :
+        parseInt((this.state.lowest + (this.state.highest - this.state.lowest)/2)),
+      });
+    });
+  }
+
+  componentDidUpdate() {
+    if (this.state.guess != 0 && this.state.guess == this.state.answer) {
+      this.setState({
+        background: "lightgreen",
+        wins: this.state.wins + 1,
+        counter: 0,
+        guess: 0,
+        highest: 0,
+        lowest: 0,
+        answer: 0,
+      });
+    }
+  }
+
+  render() {
+    return (
+      <div style={{background: this.state.background, padding: 18, textAlign: "center"}}>
+        <TitleScreen handleChange={this.handleChange} setAnswer={this.setAnswer} setFirstGuess={this.setFirstGuess} input={this.state.input} />
+        <GameScreen guess={this.state.guess} answer={this.state.answer} lowest={this.state.lowest} highest={this.state.highest} isLower={this.isLower} isHigher={this.isHigher} />
+        <WinScreen counter={this.state.counter} wins={this.state.wins} />
+      </div>
+    );
+  }
+};
+
+
+
+// RENDERING
+ReactDOM.render(<App />, document.getElementById("app"));
+
+</script>
+
+  <!--    -->
+
+  <div id="app"></div>
+</body>
